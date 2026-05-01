@@ -1,0 +1,25 @@
+# Model files (too large for GitHub)
+*.h5
+*.keras
+*.pb
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Dataset folders
+dataset/
+local_dataset/
+
+# Environment
+.env
+venv/
+env/
+
+# OS files
+.DS_Store
+Thumbs.db
