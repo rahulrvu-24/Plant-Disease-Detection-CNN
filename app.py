@@ -70,7 +70,7 @@ def load_model():
         st.error("Model file not found after download attempt.")
         return None, None
 
-    m = tf.keras.models.load_model(MODEL_FILE)
+    m = tf.keras.models.load_model(MODEL_FILE, compile = False)
     with open(CLASSES_FILE) as f:
         c = json.load(f)
     return m, c
