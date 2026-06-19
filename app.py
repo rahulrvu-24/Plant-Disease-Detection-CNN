@@ -7,7 +7,7 @@ import tensorflow as tf
 
 st.set_page_config(
     page_title="AgroScan AI",
-    page_icon="leaf",
+    page_icon="🌿",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -46,15 +46,32 @@ TIPS = {
 }
 DEFAULT_TIP = "Consult a local agronomist or plant pathology lab for a tailored treatment recommendation."
 
+# ── Model config ──────────────────────────────────────────
+MODEL_FILE    = "plant_disease_model.h5"
+CLASSES_FILE  = "class_names.json"
+DRIVE_FILE_ID = "1NbSYUb3uYw1WpqiON22MShp5u5BLSBKY"
+
 
 @st.cache_resource
 def load_model():
-    model_path   = "plant_disease_model.h5"
-    classes_path = "class_names.json"
-    if not os.path.exists(model_path):
+    # If model exists locally — load it directly (local run)
+    # If not — download from Google Drive (Streamlit Cloud)
+    if not os.path.exists(MODEL_FILE):
+        try:
+            import gdown
+            with st.spinner("Downloading model from Google Drive (~65 MB)... first load only"):
+                url = f"https://drive.google.com/uc?id={DRIVE_FILE_ID}"
+                gdown.download(url, MODEL_FILE, quiet=False)
+        except Exception as e:
+            st.error(f"Model download failed: {e}")
+            return None, None
+
+    if not os.path.exists(MODEL_FILE):
+        st.error("Model file not found after download attempt.")
         return None, None
-    m = tf.keras.models.load_model(model_path)
-    with open(classes_path) as f:
+
+    m = tf.keras.models.load_model(MODEL_FILE)
+    with open(CLASSES_FILE) as f:
         c = json.load(f)
     return m, c
 
@@ -63,12 +80,12 @@ model, CLASS_NAMES = load_model()
 
 # ── Sidebar ───────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## AgroScan AI")
+    st.markdown("## 🌿 AgroScan AI")
     st.caption("Multi-Crop Disease & Health Detector")
     st.divider()
     st.markdown("**Supported crops**")
-    for crop in ["Banana", "Chilli", "Radish",
-                 "Groundnut", "Cauliflower"]:
+    for crop in ["🍌 Banana", "🌶️ Chilli", "🥬 Radish",
+                 "🥜 Groundnut", "🥦 Cauliflower"]:
         st.markdown(f"- {crop}")
     st.divider()
     st.markdown("**Model info**")
@@ -82,16 +99,14 @@ with st.sidebar:
     st.caption("Images : 23,000+ leaf photos")
 
 # ── Main page ─────────────────────────────────────────────
-st.title("Multi-Crop Disease and Health Detection")
+st.title("🌿 Multi-Crop Disease and Health Detection")
 st.markdown(
     "Upload a leaf photo from any of the 5 supported crops "
     "to get an instant AI-powered disease diagnosis.")
 st.divider()
 
 if model is None:
-    st.error(
-        "Model not found. Place plant_disease_model.h5 "
-        "and class_names.json in the same folder as app.py.")
+    st.error("Model could not be loaded. Please check the Google Drive link.")
     st.stop()
 
 uploaded = st.file_uploader(
@@ -100,7 +115,7 @@ uploaded = st.file_uploader(
     help="Upload a clear, well-lit photo of a single leaf")
 
 if not uploaded:
-    st.info("Upload a leaf image above to get started.")
+    st.info("📷 Upload a leaf image above to get started.")
     st.stop()
 
 # ── Preprocess & predict ──────────────────────────────────
@@ -125,7 +140,7 @@ with col1:
     st.markdown("**Uploaded image**")
     st.image(img, use_column_width=True, caption=uploaded.name)
     st.caption(
-        f"{img.size[0]} x {img.size[1]} px  |  "
+        f"{img.size[0]} × {img.size[1]} px  |  "
         f"{round(uploaded.size/1024, 1)} KB")
 
 with col2:
@@ -197,7 +212,7 @@ with st.expander("View full confidence scores for all 30 classes"):
     import pandas as pd
     idx_s = np.argsort(preds)[::-1]
     df = pd.DataFrame({
-        "Class": [CLASS_NAMES[i].replace("_"," ").title()
+        "Class": [CLASS_NAMES[i].replace("_", " ").title()
                   for i in idx_s],
         "Confidence (%)": [round(float(preds[i])*100, 2)
                            for i in idx_s]
